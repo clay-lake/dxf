@@ -612,6 +612,7 @@ class DXF(DXFBase):
         if alias:
             manifest, r = self.get_manifest_and_response(alias)
             dcd = r.headers.get('Docker-Content-Digest')
+            content_type = r.headers.get('Content-Type')
             content = r.content
         else:
             dcd = None
@@ -633,6 +634,11 @@ class DXF(DXFBase):
                 dcd = hash_bytes(content)
         elif get_dcd:
             dcd = hash_bytes(manifest.encode('utf8'))
+
+        # BUGFIX:some registries like ghcr do not include this field in their response.
+        # so we add it manually for now.
+        if 'mediaType' not in parsed_manifest and content_type:
+            parsed_manifest['mediaType'] = content_type
 
         if parsed_manifest['mediaType'] == _schema2_mimetype or \
            parsed_manifest['mediaType'] == _ociv1_manifest_mimetype:
